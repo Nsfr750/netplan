@@ -19,4 +19,3 @@ comp.py esegue automaticamente clean_cache.py prima di compilare.
 ```bash
 py -3.12 COMPILER/clean_cache.py
 ```
-
