@@ -26,7 +26,6 @@ SEVERITY_CSS = {
     "OK": "#55a868",
 }
 
-
 def _img_base64(path: str) -> str:
     """Codifica base64 di un'immagine per incorporarla nell'HTML."""
     with open(path, "rb") as f:

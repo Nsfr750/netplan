@@ -137,7 +137,6 @@ class AnalysisWorker(QThread):
         except Exception as e:  # errori imprevisti mostrati all'utente
             self.failed.emit(f"Errore imprevisto: {e}")
 
-
 class UpdateWorker(QThread):
     """Controlla gli aggiornamenti su GitHub senza bloccare la GUI."""
 

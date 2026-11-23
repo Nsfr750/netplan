@@ -21,7 +21,6 @@ def get_sponsor_info() -> dict:
         "website": WEBSITE_URL,
     }
 
-
 def make_qr_png(data: str, size: int = 200) -> bytes | None:
     """Genera un QR code PNG per il dato fornito.
 

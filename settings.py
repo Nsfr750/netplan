@@ -20,7 +20,6 @@ DEFAULTS = {
     "subscriber": False,
 }
 
-
 def _store() -> QSettings:
     """Istanza QSettings dell'applicazione."""
     return QSettings(ORG, APP)

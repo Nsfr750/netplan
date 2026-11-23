@@ -23,7 +23,6 @@ from report_export import write_html_report, write_pdf_report
 
 log = get_logger(__name__)
 
-
 def run_analysis(
     input_path: str,
     outdir: str,

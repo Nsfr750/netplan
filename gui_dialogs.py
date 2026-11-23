@@ -31,7 +31,6 @@ from settings import get_setting, set_setting
 from sponsor import get_sponsor_info, make_qr_png
 from view_log import LOG_LEVELS, read_log
 
-
 class LogViewerDialog(QDialog):
     """Visualizzatore di logs/netplan.log con filtri livello/testo."""
 

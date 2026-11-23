@@ -1,9 +1,6 @@
 """
 view_log.py
 Lettura e filtraggio del file di log applicativo (logs/netplan.log).
-
-Il formato delle righe è quello definito in logger.py:
-    "2026-11-23 14:18:22,456 [INFO] netplan: messaggio"
 """
 
 import os

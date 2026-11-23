@@ -116,6 +116,5 @@ def generate(output_path: str, days: int = 1):
 
     print(f"Dataset di esempio generato: {output_path} ({len(rows)} righe)")
 
-
 if __name__ == "__main__":
     generate("data/sample_kpis.csv", days=1)

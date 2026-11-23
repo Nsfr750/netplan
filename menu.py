@@ -8,7 +8,6 @@ from PySide6.QtGui import QAction, QActionGroup
 
 from lang.language_manager import LanguageManager, tr
 
-
 def build_menu_bar(window) -> dict:
     """Crea i menu Log / Impostazioni / Help sulla finestra principale.
 

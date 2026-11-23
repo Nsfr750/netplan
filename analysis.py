@@ -283,7 +283,6 @@ TECH_GENERATION = {
     "5G SA": "5G",
 }
 
-
 def tech_generation(technology) -> str:
     """Generazione di rete (2G/3G/4G/5G) corrispondente al nome tecnologia.
 

@@ -19,7 +19,6 @@ from logger import get_logger
 
 log = get_logger(__name__)
 
-
 def make_charts(cell_summary: pd.DataFrame, outdir: str, thresholds: dict) -> list[str]:
     """Genera i grafici statici del report. Restituisce i percorsi dei PNG."""
     os.makedirs(outdir, exist_ok=True)

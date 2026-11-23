@@ -204,10 +204,8 @@ PERCENT_COLUMNS = [
 # Intervallo plausibile per l'RSRP medio aggregato (dBm).
 RSRP_RANGE = (-140.0, -40.0)
 
-
 class DataValidationError(Exception):
     pass
-
 
 def _detect_subscriber_columns(df: pd.DataFrame) -> set:
     """Colonne a livello di singolo abbonato presenti nel file."""

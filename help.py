@@ -1,7 +1,6 @@
 """
 help.py
-Testo della guida utente mostrato dal menu Help della GUI,
-disponibile in italiano e inglese.
+Testo della guida utente mostrato dal menu Help della GUI, disponibile in italiano e inglese.
 """
 
 _HELP = {

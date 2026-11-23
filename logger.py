@@ -15,7 +15,6 @@ LOG_FILE = os.path.join(LOG_DIR, "netplan.log")
 _LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 _configured = False
 
-
 def get_logger(name: str = "netplan") -> logging.Logger:
     """Restituisce un logger configurato (file rotante + console).
 

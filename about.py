@@ -13,7 +13,6 @@ GITHUB = "https://github.com/Nsfr750"
 COPYRIGHT = "© Copyright 2024-2026 Nsfr750 - All rights reserved."
 LICENSE_NAME = "Licenza proprietaria (vedi LICENSE)"
 
-
 def get_about_text() -> str:
     """Testo della finestra Informazioni."""
     return (

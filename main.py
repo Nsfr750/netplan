@@ -23,7 +23,6 @@ from version import __version__
 
 log = get_logger(__name__)
 
-
 def main():
     parser = argparse.ArgumentParser(
         description="Analisi KPI aggregati di rete per pianificazione copertura"

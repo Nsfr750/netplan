@@ -23,7 +23,6 @@ from logger import get_logger
 
 log = get_logger(__name__)
 
-
 def latest_snapshot(df: pd.DataFrame) -> pd.DataFrame:
     """Se ci sono più timestamp, prende l'ultima rilevazione per ciascuna cella.
     Altrimenti assume che il file sia già uno snapshot puntuale."""

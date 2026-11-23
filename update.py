@@ -1,6 +1,6 @@
 """
 update.py
-Controllo aggiornamenti via API GitHub Releases (nessuna dipendenza esterna).
+Controllo aggiornamenti via API GitHub Releases.
 """
 
 import json
