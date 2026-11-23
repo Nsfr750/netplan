@@ -4,9 +4,12 @@ Script di compilazione con Nuitka per gli eseguibili netplan.
 
 Produce eseguibili standalone one-file in dist/:
 
-- Netplan-GUI.exe           (gui.py, PySide6, senza console)
-- Netplan.exe               (main.py, CLI)
-- Netplan-Congestione.exe   (congestion_check.py, CLI)
+- Netplan.exe            (gui.py, PySide6, senza console)
+- Netplan-CLI.exe        (main.py, CLI)
+- congestion_check.exe   (congestion_check.py, CLI)
+
+Prima di compilare esegue COMPILER/clean_cache.py per rimuovere
+le directory __pycache__ e i file bytecode residui.
 
 Uso:
     python COMPILER/comp.py              # compila tutto
@@ -57,24 +60,39 @@ COMMON_OPTIONS = [
     "--show-progress",
 ]
 
-# nome target -> (script, opzioni specifiche)
+CLEAN_CACHE = os.path.join(ROOT, "COMPILER", "clean_cache.py")
+
+# nome target -> (script, nome exe, opzioni specifiche)
 TARGETS = {
     "gui": (
         "gui.py",
+        "Netplan.exe",
         ["--enable-plugin=pyside6", "--windows-console-mode=disable"],
     ),
-    "main": ("main.py", []),
-    "check": ("congestion_check.py", []),
+    "main": ("main.py", "Netplan-CLI.exe", []),
+    "check": ("congestion_check.py", "congestion_check.exe", []),
 }
 
 
-def build_command(script: str, extra: list[str]) -> list[str]:
+def clean_cache(dry_run: bool = False) -> bool:
+    """Esegue COMPILER/clean_cache.py sulla root del progetto."""
+    cmd = [sys.executable, CLEAN_CACHE, ROOT]
+    print(f"{'=' * 70}\nPulizia cache Python\n{'=' * 70}")
+    print(" ".join(cmd))
+    if dry_run or not os.path.exists(CLEAN_CACHE):
+        return True
+    result = subprocess.run(cmd, cwd=ROOT)
+    return result.returncode == 0
+
+
+def build_command(script: str, exe_name: str, extra: list[str]) -> list[str]:
     """Costruisce la riga di comando Nuitka per un singolo target."""
     return [
         sys.executable,
         "-m",
         "nuitka",
         *COMMON_OPTIONS,
+        f"--output-filename={exe_name}",
         *extra,
         os.path.join(ROOT, script),
     ]
@@ -82,9 +100,9 @@ def build_command(script: str, extra: list[str]) -> list[str]:
 
 def compile_target(name: str, dry_run: bool = False) -> bool:
     """Compila un target; restituisce True se la compilazione riesce."""
-    script, extra = TARGETS[name]
-    cmd = build_command(script, extra)
-    print(f"\n{'=' * 70}\nTarget: {name} ({script})\n{'=' * 70}")
+    script, exe_name, extra = TARGETS[name]
+    cmd = build_command(script, exe_name, extra)
+    print(f"\n{'=' * 70}\nTarget: {name} ({script}) -> {exe_name}\n{'=' * 70}")
     print(" ".join(cmd))
     if dry_run:
         return True
@@ -118,6 +136,9 @@ def main() -> int:
         print("Nuitka non installato. Installa con: pip install nuitka", file=sys.stderr)
         if not args.dry_run:
             return 1
+
+    if not clean_cache(args.dry_run):
+        print("ATTENZIONE: pulizia cache fallita, prosegue comunque la compilazione")
 
     selected = list(TARGETS) if args.only == "all" else [args.only]
     failed = [name for name in selected if not compile_target(name, args.dry_run)]

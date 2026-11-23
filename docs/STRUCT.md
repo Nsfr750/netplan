@@ -37,7 +37,9 @@ netplan/
 │   ├── test_data_reader.py
 │   └── test_pipeline.py
 ├── COMPILER/               # Build eseguibili
-│   └── comp.py             # Script di compilazione Nuitka -> dist/
+│   ├── comp.py             # Script di compilazione Nuitka -> dist/
+│   │                       # (Netplan.exe, Netplan-CLI.exe, congestion_check.exe)
+│   └── clean_cache.py      # Pulizia __pycache__/.pyc (eseguita da comp.py)
 ├── docs/                   # Documentazione estesa
 │   ├── STRUCT.md           # Questo file
 │   ├── SOGLIE.md           # Configurazione delle soglie

@@ -33,7 +33,7 @@ def get_logger():
     """Get a simple logger for the script."""
     import logging
     
-    logger = logging.getLogger('clean_pycache')
+    logger = logging.getLogger('clean_cache')
     logger.setLevel(logging.INFO)
     
     if not logger.handlers:
@@ -48,7 +48,7 @@ def get_logger():
     return logger
 
 
-def clean_pycache_directories(root_dir, dry_run=False, verbose=False):
+def clean_cache_directories(root_dir, dry_run=False, verbose=False):
     """
     Find and remove __pycache__ directories.
     
@@ -236,7 +236,7 @@ Examples:
         sys.exit(1)
     
     # Determine what to clean
-    clean_pycache = not args.pyc_only
+    clean_cache = not args.pyc_only
     clean_pyc = not args.pycache_only
     clean_pyo = args.include_pyo
     
@@ -254,8 +254,8 @@ Examples:
     total_pyo_removed = 0
     
     # Clean __pycache__ directories
-    if clean_pycache:
-        dirs_found, dirs_removed = clean_pycache_directories(
+    if clean_cache:
+        dirs_found, dirs_removed = clean_cache_directories(
             args.directory, args.dry_run, args.verbose
         )
         total_dirs_found += dirs_found
@@ -281,7 +281,7 @@ Examples:
     logger.info("-" * 50)
     logger.info("CLEANUP SUMMARY:")
     
-    if clean_pycache:
+    if clean_cache:
         logger.info(f"  __pycache__ directories found: {total_dirs_found}")
         if not args.dry_run:
             logger.info(f"  __pycache__ directories removed: {total_dirs_removed}")

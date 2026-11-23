@@ -6,9 +6,17 @@ python COMPILER/comp.py --only gui   # solo la GUI
 python COMPILER/comp.py --dry-run    # mostra i comandi senza compilare
 ```
 
+comp.py esegue automaticamente clean_cache.py prima di compilare.
+
+# Eseguibili prodotti (in dist/)
+
+- Netplan.exe            -> gui.py (GUI PySide6)
+- Netplan-CLI.exe        -> main.py (CLI)
+- congestion_check.exe   -> congestion_check.py
+
 # Pulizia Cache
 
 ```bash
-py -3.12 COMPILER/clean_pycache.py
+py -3.12 COMPILER/clean_cache.py
 ```
 
