@@ -5,3 +5,4 @@ openpyxl
 PySide6
 qrcode
 wand
+nuitka

@@ -8,7 +8,7 @@ MONERO_ADDRESS = (
     "47Jc6MC47WJVFhiQFYwHyBNQP5BEsjUPG6tc8R37FwcTY8K5Y3LvFzveSXoGiaDQSx"
     "DrnCUBJ5WBj6Fgmsfix8VPD4w3gXF"
 )
-GITHUB_URL = "https://github.com/Nsfr750"
+GITHUB_URL = "https://github.com/Nsfr750/netplan"
 WEBSITE_URL = "https://www.tuxxle.org"
 
 
