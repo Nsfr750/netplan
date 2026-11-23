@@ -1,0 +1,42 @@
+# CODEOWNERS — Netplan
+# Ogni riga assegna la proprietà di file/directory a un utente GitHub.
+# I proprietari ricevono automaticamente la richiesta di review sulle PR.
+# Sintassi: <pattern> <owner1> [owner2 ...]
+# Documentazione: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default: tutto il repository
+* @Nsfr750
+
+# Core analisi e lettura dati
+/data_reader.py        @Nsfr750
+/analysis.py           @Nsfr750
+/pipeline.py           @Nsfr750
+/congestion_check.py   @Nsfr750
+
+# GUI e interfaccia utente
+/gui.py                @Nsfr750
+/gui_dialogs.py        @Nsfr750
+/menu.py               @Nsfr750
+/lang/                 @Nsfr750
+
+# Report, grafici e infrastruttura
+/charts.py             @Nsfr750
+/report_export.py      @Nsfr750
+/logger.py             @Nsfr750
+/settings.py           @Nsfr750
+/update.py             @Nsfr750
+/view_log.py           @Nsfr750
+
+# Build e compilazione
+/COMPILER/             @Nsfr750
+
+# Test
+/tests/                @Nsfr750
+
+# Documentazione, licenza e sicurezza
+/docs/                 @Nsfr750
+/README.md             @Nsfr750
+/LICENSE               @Nsfr750
+/SECURITY.md           @Nsfr750
+/CHANGELOG.md          @Nsfr750
+/TO_DO.md              @Nsfr750
