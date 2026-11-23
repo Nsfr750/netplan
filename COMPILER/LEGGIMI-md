@@ -1,0 +1,14 @@
+# Per Compilare
+
+```bash
+python COMPILER/comp.py              # tutti i target
+python COMPILER/comp.py --only gui   # solo la GUI
+python COMPILER/comp.py --dry-run    # mostra i comandi senza compilare
+```
+
+# Pulizia Cache
+
+```bash
+py -3.12 COMPILER/clean_pycache.py
+```
+

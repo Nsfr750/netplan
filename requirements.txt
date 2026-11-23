@@ -1,0 +1,7 @@
+pandas
+numpy
+matplotlib
+openpyxl
+PySide6
+qrcode
+wand
