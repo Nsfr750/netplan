@@ -17,6 +17,7 @@ DEFAULTS = {
     "html_report": True,
     "pdf_report": True,
     "strict": False,
+    "subscriber": False,
 }
 
 

@@ -63,6 +63,7 @@ def write_html_report(
     site_summary: pd.DataFrame,
     chart_paths: list[str],
     outdir: str,
+    extra_sections: list[tuple[str, pd.DataFrame]] | None = None,
 ) -> str:
     """Genera report_pianificazione_copertura.html e ne restituisce il percorso."""
     n_crit = int((cell_summary["severity"] == "CRITICO").sum())
@@ -105,6 +106,7 @@ tr:nth-child(even) td {{ background: #f4f6f9; }}
 {_df_to_html_table(cell_summary)}
 <h2>Report per sito</h2>
 {_df_to_html_table(site_summary)}
+{"".join(f"<h2>{html.escape(titolo)}</h2>{_df_to_html_table(sec)}" for titolo, sec in (extra_sections or []))}
 <h2>Grafici</h2>
 {img_tags}
 </body>
@@ -143,6 +145,7 @@ def write_pdf_report(
     site_summary: pd.DataFrame,
     chart_paths: list[str],
     outdir: str,
+    extra_sections: list[tuple[str, pd.DataFrame]] | None = None,
 ) -> str:
     """Genera report_pianificazione_copertura.pdf e ne restituisce il percorso."""
     path = os.path.join(outdir, "report_pianificazione_copertura.pdf")
@@ -202,6 +205,9 @@ def write_pdf_report(
             _add_table_page(pdf, "Celle con anomalie", top)
 
         _add_table_page(pdf, "Report per sito", site_summary)
+
+        for titolo, sec in extra_sections or []:
+            _add_table_page(pdf, titolo, sec)
 
         # Una pagina per grafico
         for chart in chart_paths:

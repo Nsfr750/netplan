@@ -97,12 +97,20 @@ def main():
         action="store_true",
         help="Considera errori anche gli avvisi di validazione dei dati",
     )
+    parser.add_argument(
+        "--subscriber",
+        action="store_true",
+        help="Accetta dati a livello singolo abbonato (MSISDN/IMSI)",
+    )
     args = parser.parse_args()
 
     try:
         thresholds = load_thresholds(args.thresholds) if args.thresholds else None
         df = read_cell_data(
-            args.input, require_congestion_fields=True, strict=args.strict
+            args.input,
+            require_congestion_fields=True,
+            strict=args.strict,
+            allow_subscriber_data=args.subscriber,
         )
     except (FileNotFoundError, DataValidationError, ValueError) as e:
         print(f"Errore nella lettura dei dati: {e}", file=sys.stderr)

@@ -27,6 +27,15 @@ e il progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/).
   confronto SemVer, eseguito in thread dalla GUI.
 - `help.py`, `about.py`, `sponsor.py`: finestre Guida (IT/EN),
   Informazioni e Sponsor (PayPal, Monero con QR code via qrcode+wand).
+- Modalità subscriber opzionale (`--subscriber` / checkbox GUI): i file
+  con MSISDN/IMSI restano rifiutati per default; se abilitata produce
+  `report_per_abbonato.csv` con riepilogo per abbonato.
+- `analysis.technology_summary` + `report_per_tecnologia.csv` +
+  `technology_users.png`: analisi per tecnologia/generazione 2G/3G/4G/5G
+  (`tech_generation`).
+- Alias colonne per export OSS/PM Nokia/Ericsson/Huawei e
+  `detect_vendor` per il riconoscimento automatico del formato.
+- `--mingw64` nello script di compilazione (fix toolchain gcc di Nuitka).
 
 ## [0.2.0] - 2026-11-23
 

@@ -4,8 +4,6 @@
 
 ## Pianificato
 
-- [ ] Import diretto da formati OSS/NMS specifici (Nokia, Ericsson, Huawei)
-
 ## Idee / backlog
 
 - [ ] Firma digitale degli eseguibili compilati (certificato code signing)
@@ -36,3 +34,9 @@
 - [x] Impostazioni persistenti (QSettings)
 - [x] Controllo aggiornamenti da GitHub Releases (`update.py`)
 - [x] Finestre Help, Sponsor (con QR) e About
+- [x] Modalità subscriber opzionale: dati a livello utente/IMSI accettati
+      solo con `--subscriber` / checkbox GUI, con report per-abbonato
+- [x] Analisi per tipo di utente collegato 2G/3G/4G/5G/LTE
+      (`report_per_tecnologia.csv`, `technology_users.png`)
+- [x] Import da formati OSS/NMS vendor-specifici (alias Nokia, Ericsson,
+      Huawei + `detect_vendor`)

@@ -259,3 +259,123 @@ def site_level_summary(cell_summary: pd.DataFrame) -> pd.DataFrame:
         )
     site = cell_summary.groupby("site_id").agg(**aggs).reset_index()
     return site
+
+
+# Mappatura nome tecnologia -> generazione di rete (2G/3G/4G/5G).
+TECH_GENERATION = {
+    "GSM": "2G",
+    "GPRS": "2G",
+    "EDGE": "2G",
+    "UMTS": "3G",
+    "WCDMA": "3G",
+    "HSPA": "3G",
+    "HSPA+": "3G",
+    "TD-SCDMA": "3G",
+    "LTE": "4G",
+    "LTE-A": "4G",
+    "LTE FDD": "4G",
+    "LTE TDD": "4G",
+    "NR": "5G",
+    "NR-NSA": "5G",
+    "NR-SA": "5G",
+    "5G": "5G",
+    "5G NSA": "5G",
+    "5G SA": "5G",
+}
+
+
+def tech_generation(technology) -> str:
+    """Generazione di rete (2G/3G/4G/5G) corrispondente al nome tecnologia.
+
+    Cerca il nome per intero in TECH_GENERATION (case-insensitive) e poi
+    come prefisso; restituisce 'ALTRO' se non riconosciuta.
+    """
+    if pd.isna(technology):
+        return "N/D"
+    name = str(technology).strip().upper()
+    if name in TECH_GENERATION:
+        return TECH_GENERATION[name]
+    for tech, gen in TECH_GENERATION.items():
+        if name.startswith(tech):
+            return gen
+    return "ALTRO"
+
+
+def technology_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """Riepilogo per tecnologia/generazione di rete (2G/3G/4G/5G).
+
+    Aggrega le righe del dataset per `technology`: celle servite, PRB
+    medio/picco, utenze connesse, volume dati e qualità. Aggiunge la
+    colonna `generation` mappata via tech_generation.
+    """
+    if "technology" not in df.columns:
+        return pd.DataFrame()
+
+    aggs = {}
+    if "cell_id" in df.columns:
+        aggs["n_celle"] = ("cell_id", "nunique")
+    if "prb_utilization_pct" in df.columns:
+        aggs["avg_prb"] = ("prb_utilization_pct", "mean")
+        aggs["peak_prb"] = ("prb_utilization_pct", "max")
+    if "connected_users_avg" in df.columns:
+        aggs["avg_utenze"] = ("connected_users_avg", "mean")
+    if "data_volume_gb" in df.columns:
+        aggs["tot_volume_gb"] = ("data_volume_gb", "sum")
+    if "call_drop_rate_pct" in df.columns:
+        aggs["avg_drop_rate"] = ("call_drop_rate_pct", "mean")
+    if "handover_success_rate_pct" in df.columns:
+        aggs["avg_ho_success"] = ("handover_success_rate_pct", "mean")
+    if not aggs:
+        return pd.DataFrame()
+
+    tech = df.groupby("technology").agg(**aggs).reset_index()
+    tech.insert(1, "generation", tech["technology"].map(tech_generation))
+    order = {"2G": 0, "3G": 1, "4G": 2, "5G": 3}
+    tech["_o"] = tech["generation"].map(lambda g: order.get(g, 9))
+    return tech.sort_values("_o").drop(columns="_o").reset_index(drop=True)
+
+
+def subscriber_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """Riepilogo per singolo abbonato (modalità subscriber).
+
+    Aggrega le misure per identificativo abbonato (MSISDN/IMSI/...):
+    celle utilizzate, tecnologia/generazione prevalente, volumi e
+    qualità media. Restituisce DataFrame vuoto se non c'è una colonna
+    identificativa.
+    """
+    from data_reader import subscriber_id_column
+
+    id_col = subscriber_id_column(df)
+    if id_col is None:
+        return pd.DataFrame()
+
+    aggs = {"n_rilevazioni": (id_col, "size")}
+    if "cell_id" in df.columns:
+        aggs["n_celle_usate"] = ("cell_id", "nunique")
+        aggs["celle"] = (
+            "cell_id",
+            lambda s: ", ".join(sorted(s.astype(str).unique())[:5]),
+        )
+    if "technology" in df.columns:
+        aggs["tecnologia_principale"] = (
+            "technology",
+            lambda s: s.mode().iloc[0] if not s.mode().empty else None,
+        )
+    if "prb_utilization_pct" in df.columns:
+        aggs["avg_prb"] = ("prb_utilization_pct", "mean")
+    if "data_volume_gb" in df.columns:
+        aggs["tot_volume_gb"] = ("data_volume_gb", "sum")
+    if "call_drop_rate_pct" in df.columns:
+        aggs["avg_drop_rate"] = ("call_drop_rate_pct", "mean")
+    if "avg_rsrp_dbm" in df.columns:
+        aggs["avg_rsrp"] = ("avg_rsrp_dbm", "mean")
+    if "weak_signal_sample_pct" in df.columns:
+        aggs["avg_weak_signal_pct"] = ("weak_signal_sample_pct", "mean")
+
+    summary = df.groupby(id_col).agg(**aggs).reset_index()
+    if "tecnologia_principale" in summary.columns:
+        summary["generazione"] = summary["tecnologia_principale"].map(tech_generation)
+    sort_col = (
+        "tot_volume_gb" if "tot_volume_gb" in summary.columns else "n_rilevazioni"
+    )
+    return summary.sort_values(sort_col, ascending=False).reset_index(drop=True)

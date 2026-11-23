@@ -55,6 +55,10 @@ python main.py --input data/sample_kpis.csv --strict
 
 # disattivare i singoli export
 python main.py --input data/sample_kpis.csv --no-pdf --no-html
+
+# modalità subscriber: accetta dati a livello utente (MSISDN/IMSI)
+# e produce report_per_abbonato.csv — solo per analisi autorizzate
+python main.py --input data/con_msisdn.csv --subscriber
 ```
 
 ## Interfaccia grafica
@@ -120,16 +124,42 @@ Management) dell'operatore, già aggregati dal sistema di rete stesso.
 Se lo stesso file contiene più tecnologie o bande per cella, ognuna
 produce una riga separata nel report.
 
+### Formati vendor
+
+Gli alias in `COLUMN_ALIASES` coprono anche i nomi tipici degli export
+**Nokia** (`nrcelldu`, `lnbts`...), **Ericsson** (`eutrancellfdd`,
+`me_context`, `begin_time`...) e **Huawei** (`ne_name`, `cell_name`...):
+`detect_vendor` riconosce automaticamente il formato e lo segnala nel log.
+
+### Modalità subscriber (`--subscriber`)
+
+Per default i file con colonne a livello di singolo abbonato (`msisdn`,
+`imsi`, `imei`, `subscriber_id`...) sono **rifiutati**. Con `--subscriber`
+(o l'omonima opzione nella GUI) vengono accettati e produce anche
+`report_per_abbonato.csv`: riepilogo per abbonato con celle usate,
+tecnologia/generazione prevalente, volumi e qualità media. Usare solo
+per analisi autorizzate su dati di propria competenza.
+
+### Report per tecnologia (2G/3G/4G/5G)
+
+Se il file contiene la colonna `technology` viene sempre prodotto
+`report_per_tecnologia.csv` con celle, PRB, utenze e volumi per RAT —
+più la mappatura alla generazione (`GSM/EDGE→2G`, `UMTS/HSPA→3G`,
+`LTE→4G`, `NR→5G`) e il grafico `technology_users.png`.
+
 ## Output
 
 - `output/report_per_cella.csv` / `.xlsx` — stato e raccomandazione per ogni cella
 - `output/report_per_sito.csv` — vista aggregata per sito (utile per decidere upgrade vs nuovo sito)
+- `output/report_per_tecnologia.csv` — riepilogo per RAT/generazione (2G/3G/4G/5G)
+- `output/report_per_abbonato.csv` — solo in modalità `--subscriber`
 - `output/report_pianificazione_copertura.html` — report completo autonomo
 - `output/report_pianificazione_copertura.pdf` — report PDF multi-pagina
 - `output/prb_distribution.png` — istogramma congestione
 - `output/coverage_scatter.png` — qualità del segnale per cella
 - `output/cell_map.png` — mappa geografica con stato (verde/arancio/rosso)
 - `output/trend_celle.png` — trend temporale delle celle peggiori (se ci sono più rilevazioni)
+- `output/technology_users.png` — utenze e traffico medio per tecnologia
 
 ## Personalizzazione soglie
 

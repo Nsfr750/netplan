@@ -111,6 +111,56 @@ def make_charts(cell_summary: pd.DataFrame, outdir: str, thresholds: dict) -> li
     return paths
 
 
+def make_technology_chart(df: pd.DataFrame, outdir: str) -> list[str]:
+    """Bar chart: utenze medie e volume dati per tecnologia (2G/3G/4G/5G).
+
+    Produce `technology_users.png` se il dataset ha la colonna
+    `technology` e almeno una metrica utile. Restituisce i percorsi PNG.
+    """
+    from analysis import tech_generation
+
+    if "technology" not in df.columns:
+        return []
+
+    metrics = [m for m in ("connected_users_avg", "data_volume_gb") if m in df.columns]
+    if not metrics:
+        return []
+
+    work = df.copy()
+    work["_gen"] = work["technology"].map(tech_generation)
+    work["_label"] = (
+        work["technology"].astype(str) + " (" + work["_gen"].astype(str) + ")"
+    )
+    grouped = work.groupby("_label")[metrics].mean().sort_index()
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    x = range(len(grouped))
+    width = 0.8 / len(metrics)
+    colors = ["#4C72B0", "#55A868"]
+    for i, metric in enumerate(metrics):
+        label = (
+            "Utenze medie" if metric == "connected_users_avg" else "Volume medio (GB)"
+        )
+        ax.bar(
+            [p + i * width for p in x],
+            grouped[metric],
+            width=width,
+            color=colors[i],
+            label=label,
+        )
+    ax.set_xticks([p + width * (len(metrics) - 1) / 2 for p in x])
+    ax.set_xticklabels(grouped.index, rotation=30, ha="right")
+    ax.set_title("Utenze e traffico medio per tecnologia")
+    ax.legend()
+    fig.tight_layout()
+
+    path = os.path.join(outdir, "technology_users.png")
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    log.info("Grafico tecnologie: %s", os.path.basename(path))
+    return [path]
+
+
 def make_trend_charts(
     df: pd.DataFrame,
     cell_summary: pd.DataFrame,

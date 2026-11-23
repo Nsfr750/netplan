@@ -106,6 +106,7 @@ class AnalysisWorker(QThread):
         html_report: bool,
         pdf_report: bool,
         strict: bool,
+        allow_subscriber: bool = False,
         parent=None,
     ):
         super().__init__(parent)
@@ -116,6 +117,7 @@ class AnalysisWorker(QThread):
         self.html_report = html_report
         self.pdf_report = pdf_report
         self.strict = strict
+        self.allow_subscriber = allow_subscriber
 
     def run(self):
         try:
@@ -127,6 +129,7 @@ class AnalysisWorker(QThread):
                 html_report=self.html_report,
                 pdf_report=self.pdf_report,
                 strict=self.strict,
+                allow_subscriber_data=self.allow_subscriber,
             )
             self.finished_ok.emit(result)
         except (FileNotFoundError, DataValidationError, ValueError) as e:
@@ -210,9 +213,11 @@ class MainWindow(QMainWindow):
         self.chk_pdf = QCheckBox(tr("opt_pdf"))
         self.chk_pdf.setChecked(True)
         self.chk_strict = QCheckBox(tr("opt_strict"))
+        self.chk_subscriber = QCheckBox(tr("opt_subscriber"))
         row4.addWidget(self.chk_html)
         row4.addWidget(self.chk_pdf)
         row4.addWidget(self.chk_strict)
+        row4.addWidget(self.chk_subscriber)
         self.lbl_trend = QLabel(tr("trend_cells_label"))
         row4.addWidget(self.lbl_trend)
         self.spin_trend = QSpinBox()
@@ -242,6 +247,12 @@ class MainWindow(QMainWindow):
 
         self.table_sites = QTableWidget()
         self.tabs.addTab(self.table_sites, tr("tab_sites"))
+
+        self.table_tech = QTableWidget()
+        self.tabs.addTab(self.table_tech, tr("tab_tech"))
+
+        self.table_subscriber = QTableWidget()
+        self.tabs.addTab(self.table_subscriber, tr("tab_subscriber"))
 
         self.charts_area = QScrollArea()
         self.charts_widget = QWidget()
@@ -276,6 +287,7 @@ class MainWindow(QMainWindow):
         self.chk_html.setChecked(bool(get_setting("html_report")))
         self.chk_pdf.setChecked(bool(get_setting("pdf_report")))
         self.chk_strict.setChecked(bool(get_setting("strict")))
+        self.chk_subscriber.setChecked(bool(get_setting("subscriber")))
 
     def _save_settings(self):
         """Salva lo stato corrente delle opzioni dell'interfaccia."""
@@ -285,6 +297,7 @@ class MainWindow(QMainWindow):
         set_setting("html_report", self.chk_html.isChecked())
         set_setting("pdf_report", self.chk_pdf.isChecked())
         set_setting("strict", self.chk_strict.isChecked())
+        set_setting("subscriber", self.chk_subscriber.isChecked())
 
     # ----- menu: Log / Impostazioni / Help ----------------------------------
 
@@ -366,11 +379,19 @@ class MainWindow(QMainWindow):
         self.chk_html.setText(tr("opt_html"))
         self.chk_pdf.setText(tr("opt_pdf"))
         self.chk_strict.setText(tr("opt_strict"))
+        self.chk_subscriber.setText(tr("opt_subscriber"))
         self.lbl_trend.setText(tr("trend_cells_label"))
         self.btn_run.setText(tr("run_analysis"))
         self.btn_close.setText(tr("close"))
         for i, key in enumerate(
-            ("tab_summary", "tab_cells", "tab_sites", "tab_charts")
+            (
+                "tab_summary",
+                "tab_cells",
+                "tab_sites",
+                "tab_tech",
+                "tab_subscriber",
+                "tab_charts",
+            )
         ):
             self.tabs.setTabText(i, tr(key))
         retranslate_menu(self._menu_items)
@@ -427,6 +448,7 @@ class MainWindow(QMainWindow):
             self.chk_html.isChecked(),
             self.chk_pdf.isChecked(),
             self.chk_strict.isChecked(),
+            self.chk_subscriber.isChecked(),
             parent=self,
         )
         self.worker.finished_ok.connect(self._on_done)
@@ -450,7 +472,15 @@ class MainWindow(QMainWindow):
             "",
             "File prodotti:",
         ]
-        for key in ("csv_cell", "csv_site", "xlsx", "html", "pdf"):
+        for key in (
+            "csv_cell",
+            "csv_site",
+            "csv_tech",
+            "csv_subscriber",
+            "xlsx",
+            "html",
+            "pdf",
+        ):
             if result.get(key):
                 lines.append(f"  {result[key]}")
         lines += [f"  {p}" for p in result["charts"]]
@@ -458,6 +488,11 @@ class MainWindow(QMainWindow):
 
         self._fill_table(self.table_cells, cs)
         self._fill_table(self.table_sites, result["site_summary"])
+        self._fill_table(self.table_tech, result["tech_summary"])
+        sub = result.get("subscriber_summary")
+        self._fill_table(
+            self.table_subscriber, sub if sub is not None else pd.DataFrame()
+        )
         self._show_charts(result["charts"])
 
     def _on_error(self, message: str):

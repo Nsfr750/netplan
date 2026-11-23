@@ -43,6 +43,12 @@ def main():
         help="Considera errori anche gli avvisi di validazione dei dati",
     )
     parser.add_argument(
+        "--subscriber",
+        action="store_true",
+        help="Accetta dati a livello singolo abbonato (MSISDN/IMSI) e produce "
+        "il report per-abbonato. Usare solo per analisi autorizzate.",
+    )
+    parser.add_argument(
         "--no-html", action="store_true", help="Non generare il report HTML"
     )
     parser.add_argument(
@@ -69,6 +75,7 @@ def main():
             html_report=not args.no_html,
             pdf_report=not args.no_pdf,
             strict=args.strict,
+            allow_subscriber_data=args.subscriber,
         )
     except (FileNotFoundError, DataValidationError, ValueError) as e:
         print(f"Errore: {e}", file=sys.stderr)
@@ -92,6 +99,10 @@ def main():
     print()
     print(f"Report dettagliato per cella: {result['csv_cell']}")
     print(f"Report aggregato per sito:    {result['csv_site']}")
+    if result["csv_tech"]:
+        print(f"Report per tecnologia:        {result['csv_tech']}")
+    if result["csv_subscriber"]:
+        print(f"Report per abbonato:          {result['csv_subscriber']}")
     if result["xlsx"]:
         print(f"Report Excel:                 {result['xlsx']}")
     if result["html"]:

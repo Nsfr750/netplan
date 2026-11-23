@@ -4,11 +4,14 @@ Lettura e normalizzazione di export di KPI di rete aggregati per cella,
 provenienti da sistemi OSS/PM reali (Nokia, Ericsson, Huawei, data
 warehouse interni, ecc.), che spesso usano nomi di colonna diversi tra loro.
 
-Lavora esclusivamente su dati aggregati per cella/settore. Non legge,
-non richiede e non deve mai contenere identificativi di singoli utenti
-(numeri di telefono, IMSI, IMEI, MSISDN...). Se un file in input contiene
-colonne di questo tipo, lo strumento le segnala e si rifiuta di usarle
-(vedi `_reject_subscriber_level_data`).
+Lavora su dati aggregati per cella/settore. I file con colonne a livello
+di singolo abbonato (numeri di telefono, IMSI, IMEI, MSISDN...) sono
+rifiutati per default (vedi `_detect_subscriber_columns`), a meno che
+non venga esplicitamente abilitata la modalità subscriber
+(`allow_subscriber_data=True`) per analisi per-utente autorizzate.
+
+Riconosce anche i nomi colonna tipici degli export OSS/PM di Nokia,
+Ericsson e Huawei (vedi `detect_vendor`).
 """
 
 import os
@@ -34,12 +37,71 @@ FORBIDDEN_COLUMNS = {
     "indirizzo_ip",
 }
 
+# Colonne che identificano il singolo abbonato, in ordine di preferenza
+# come chiave del report per-abbonato (analysis.subscriber_summary).
+SUBSCRIBER_ID_CANDIDATES = [
+    "msisdn",
+    "imsi",
+    "imei",
+    "subscriber_id",
+    "subscriber",
+    "sim_id",
+    "numero_telefono",
+    "phone_number",
+]
+
+# Firme caratteristiche per riconoscere il vendor dell'export OSS/PM.
+VENDOR_SIGNATURES = {
+    "Nokia": {"nrcelldu", "lnbts", "wcel", "lnrel", "nrcellcu"},
+    "Ericsson": {"eutrancellfdd", "eutrancell", "me_context", "erbs", "euancel"},
+    "Huawei": {"ne_name", "cell_name", "ne_id", "object_id", "cellid"},
+}
+
 # Mapping alias -> nome colonna standard usato internamente dal resto del tool.
+# Include anche i nomi tipici degli export OSS/PM (Nokia, Ericsson, Huawei).
 # Aggiungi qui gli alias usati dai tuoi export reali.
 COLUMN_ALIASES = {
-    "site_id": ["site_id", "site", "bts_id", "node_id", "sito", "id_sito"],
-    "cell_id": ["cell_id", "cell", "cella", "id_cella", "sector_id"],
-    "technology": ["technology", "tech", "rat", "tecnologia"],
+    "site_id": [
+        "site_id",
+        "site",
+        "bts_id",
+        "node_id",
+        "sito",
+        "id_sito",
+        # vendor OSS/PM
+        "me_name",  # Nokia/Huawei: Managed Element
+        "me_context",  # Ericsson: managed element context
+        "ne_name",  # Huawei: Network Element
+        "node_name",
+        "enb_id",
+        "gnb_id",
+        "bts_name",
+    ],
+    "cell_id": [
+        "cell_id",
+        "cell",
+        "cella",
+        "id_cella",
+        "sector_id",
+        # vendor OSS/PM
+        "cell_name",  # Huawei
+        "cellname",
+        "nrcelldu",  # Nokia: NRCellDU
+        "nrcellid",
+        "eutrancellfdd",  # Ericsson: EUtranCellFDD
+        "eutrancell",
+        "eci",
+        "cgi",
+        "sector_name",
+    ],
+    "technology": [
+        "technology",
+        "tech",
+        "rat",
+        "tecnologia",
+        "rat_type",
+        "radio_access_technology",
+    ],
     "band": ["band", "frequency_band", "banda", "band_mhz", "freq_band"],
     "timestamp_hour": [
         "timestamp_hour",
@@ -47,6 +109,12 @@ COLUMN_ALIASES = {
         "datetime",
         "data_ora",
         "period_start_time",
+        # vendor OSS/PM
+        "begin_time",  # Ericsson/Huawei PM counters
+        "end_time",
+        "start_time",
+        "collection_time",
+        "period",
     ],
     "latitude": ["latitude", "lat", "latitudine"],
     "longitude": ["longitude", "lon", "lng", "longitudine"],
@@ -57,32 +125,61 @@ COLUMN_ALIASES = {
         "prb_utilization",
         "rrc_util_pct",
         "resource_block_utilization",
+        # vendor OSS/PM
+        "dl_prb_usage_rate",
+        "prb_dl_util",
+        "dl_prb_utilization",
+        "prb_usage",
+        "pmprbuseddl",
     ],
-    "traffic_erlang": ["traffic_erlang", "erlang", "voice_traffic_erl"],
+    "traffic_erlang": [
+        "traffic_erlang",
+        "erlang",
+        "voice_traffic_erl",
+        "traffic_volume_erl",
+        "erl",
+    ],
     "data_volume_gb": [
         "data_volume_gb",
         "data_volume",
         "throughput_gb",
         "volume_dati_gb",
+        "dl_data_volume_gb",
+        "pdcpsduvolumedl",
     ],
     "connected_users_avg": [
         "connected_users_avg",
         "avg_connected_users",
         "rrc_connected_users_avg",
         "utenze_medie",
+        "rrcconnuser",
+        "average_user_number",
+        "rrc_connected_users",
     ],
     "call_drop_rate_pct": [
         "call_drop_rate_pct",
         "drop_rate",
         "cdr_pct",
         "call_drop_rate",
+        "call_drop_ratio",
+        "dcr",
     ],
     "handover_success_rate_pct": [
         "handover_success_rate_pct",
         "ho_success_rate",
         "handover_success",
+        "ho_sr",
+        "hosr",
+        "intra_freq_ho_sr",
     ],
-    "avg_rsrp_dbm": ["avg_rsrp_dbm", "rsrp_avg", "avg_rsrp"],
+    "avg_rsrp_dbm": [
+        "avg_rsrp_dbm",
+        "rsrp_avg",
+        "avg_rsrp",
+        "rsrp",
+        "mr_rsrp_avg",
+        "rsrp_mean",
+    ],
     "weak_signal_sample_pct": [
         "weak_signal_sample_pct",
         "weak_signal_pct",
@@ -112,15 +209,31 @@ class DataValidationError(Exception):
     pass
 
 
-def _reject_subscriber_level_data(df: pd.DataFrame, source: str):
-    """Rifiuta il file se contiene colonne riconducibili a singoli abbonati."""
-    present = FORBIDDEN_COLUMNS.intersection({c.lower().strip() for c in df.columns})
-    if present:
-        raise DataValidationError(
-            f"Il file '{source}' contiene colonne a livello di singolo abbonato/dispositivo "
-            f"({', '.join(sorted(present))}). Questo strumento accetta solo KPI aggregati per "
-            f"cella: rimuovi queste colonne o fornisci un export aggregato dal sistema OSS/PM."
-        )
+def _detect_subscriber_columns(df: pd.DataFrame) -> set:
+    """Colonne a livello di singolo abbonato presenti nel file."""
+    return FORBIDDEN_COLUMNS.intersection({c.lower().strip() for c in df.columns})
+
+
+def subscriber_id_column(df: pd.DataFrame) -> str | None:
+    """Colonna identificativa dell'abbonato, se presente nel DataFrame."""
+    for col in SUBSCRIBER_ID_CANDIDATES:
+        if col in df.columns:
+            return col
+    return None
+
+
+def detect_vendor(df: pd.DataFrame) -> str | None:
+    """Riconosce il vendor OSS/PM dai nomi colonna caratteristici.
+
+    Confronta le colonne normalizzate con le firme in VENDOR_SIGNATURES;
+    restituisce il vendor con più corrispondenze oppure None.
+    """
+    cols = {c.lower().strip().replace(" ", "_") for c in df.columns}
+    scores = {vendor: len(cols & sigs) for vendor, sigs in VENDOR_SIGNATURES.items()}
+    best = max(scores, key=scores.get)
+    if scores[best] == 0:
+        return None
+    return best
 
 
 def _normalize_columns(df: pd.DataFrame, warnings: list[str]) -> pd.DataFrame:
@@ -209,6 +322,7 @@ def read_cell_data(
     path: str,
     require_congestion_fields: bool = True,
     strict: bool = False,
+    allow_subscriber_data: bool = False,
 ) -> pd.DataFrame:
     """
     Legge un export di KPI celle (.csv, .xlsx, .xls), normalizza i nomi
@@ -220,6 +334,9 @@ def read_cell_data(
             prb_utilization_pct.
         strict: se True, gli avvisi di validazione (valori fuori range,
             duplicati, alias ambigui...) diventano errori.
+        allow_subscriber_data: se True, accetta anche file con colonne a
+            livello di singolo abbonato (MSISDN, IMSI...); da usare solo
+            per analisi autorizzate su dati di propria competenza.
 
     Returns:
         DataFrame normalizzato con i nomi colonna standard.
@@ -227,7 +344,8 @@ def read_cell_data(
     Raises:
         FileNotFoundError: file inesistente.
         DataValidationError: formato non supportato, dati a livello
-            abbonato, colonne obbligatorie mancanti o (in strict) avvisi.
+            abbonato (senza allow_subscriber_data), colonne obbligatorie
+            mancanti o (in strict) avvisi.
     """
     if not os.path.exists(path):
         raise FileNotFoundError(f"File non trovato: {path}")
@@ -242,7 +360,30 @@ def read_cell_data(
             f"Formato file non supportato: '{ext}'. Usa .csv, .xlsx o .xls."
         )
 
-    _reject_subscriber_level_data(df, path)
+    subscriber_cols = _detect_subscriber_columns(df)
+    if subscriber_cols and not allow_subscriber_data:
+        raise DataValidationError(
+            f"Il file '{path}' contiene colonne a livello di singolo abbonato/dispositivo "
+            f"({', '.join(sorted(subscriber_cols))}). Per default questo strumento accetta "
+            f"solo KPI aggregati per cella: rimuovi queste colonne, fornisci un export "
+            f"aggregato dal sistema OSS/PM, oppure riprova con --subscriber se sei "
+            f"autorizzato a trattare dati a livello utente."
+        )
+    if subscriber_cols:
+        log.warning(
+            "Modalità subscriber attiva: il file '%s' contiene dati a livello "
+            "di singolo abbonato (%s). Usare solo per analisi autorizzate.",
+            path,
+            ", ".join(sorted(subscriber_cols)),
+        )
+        # gli identificativi restano stringa (MSISDN con zeri iniziali ecc.)
+        for col in df.columns:
+            if col.lower().strip() in FORBIDDEN_COLUMNS:
+                df[col] = df[col].astype(str)
+
+    vendor = detect_vendor(df)
+    if vendor:
+        log.info("Formato export riconosciuto: %s", vendor)
 
     warnings: list[str] = []
     df = _normalize_columns(df, warnings)
@@ -303,6 +444,15 @@ def describe_dataset(df: pd.DataFrame) -> str:
     if "band" in df.columns:
         bande = ", ".join(sorted(df["band"].dropna().astype(str).unique()))
         lines.append(f"Bande presenti: {bande}")
+    sub_col = subscriber_id_column(df)
+    if sub_col:
+        lines.append(
+            f"Dati a livello abbonato: colonna '{sub_col}' "
+            f"({df[sub_col].nunique()} abbonati unici)"
+        )
+    vendor = detect_vendor(df)
+    if vendor:
+        lines.append(f"Vendor export rilevato: {vendor}")
     if "timestamp_hour" in df.columns and df["timestamp_hour"].notna().any():
         lines.append(
             f"Intervallo temporale: {df['timestamp_hour'].min()} -> {df['timestamp_hour'].max()}"
