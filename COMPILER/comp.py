@@ -4,7 +4,7 @@ Script di compilazione con Nuitka per gli eseguibili netplan.
 
 Produce eseguibili standalone one-file in dist/:
 
-- Netplan.exe            (gui.py, PySide6, senza console)
+- Netplan-GUI.exe        (gui.py, PySide6, senza console)
 - Netplan-CLI.exe        (main.py, CLI)
 - congestion_check.exe   (congestion_check.py, CLI)
 
@@ -46,6 +46,9 @@ COMMON_OPTIONS = [
     "--mingw64",
     "--standalone",
     "--onefile",
+    # pandas >= 3.1: Nuitka non rileva pandas._libs._cyutility (estensione
+    # Cython importata dai .pyx interni) -> ModuleNotFoundError a runtime.
+    "--include-package=pandas._libs",
     f"--windows-icon-from-ico={ICON_ICO}",
     f"--include-data-dir={ASSETS_DIR}=assets",
     f"--company-name={COMPANY}",
@@ -66,7 +69,7 @@ CLEAN_CACHE = os.path.join(ROOT, "COMPILER", "clean_cache.py")
 TARGETS = {
     "gui": (
         "gui.py",
-        "Netplan.exe",
+        "Netplan-GUI.exe",
         ["--enable-plugin=pyside6", "--windows-console-mode=disable"],
     ),
     "main": ("main.py", "Netplan-CLI.exe", []),
